@@ -5,7 +5,7 @@
 # wc -l             conta as ocorrências
 ls -la /usr/bin | grep "\->" | wc -l
 
-# -m1 ^cpu\ cores /proc/cpuinfo
+# grep -m1 ^cpu\ cores /proc/cpuinfo
 # filtra a primeira ocorrência de "cpu cores" no arquivo cpuinfo
 # cut -d: -f2   
 # recorta a partir do delimitador : a segunda coluna, que contém o número desejado 
