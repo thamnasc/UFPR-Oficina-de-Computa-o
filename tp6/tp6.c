@@ -41,11 +41,11 @@ int ehCharFechamento(char character) {
  * retorna 0 caso contrário */
 int ehParCorreto(char char1, char char2) {
 
-    if(char1 == '(' && char2 == ')')
+    if( (char1 == '(') && (char2 == ')') )
         return 1;
-    if(char1 == '{' && char2 == '}')
+    if( (char1 == '{') && (char2 == '}') )
         return 1;
-    if(char1 == '[' && char2 == ']')
+    if( (char1 == '[') && (char2 == ']') )
         return 1;
 
     return 0;
