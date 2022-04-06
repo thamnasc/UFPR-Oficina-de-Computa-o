@@ -7,9 +7,9 @@
 /* retorna 1 quando corresponde a 
  * algum dos três caracteres de abertura,
  * retorna 0 caso contrário */
-int ehCharAbertura(char character) {
+int ehCharAbertura(char caracter) {
 
-    switch(character){
+    switch(caracter) {
         case '(':
         case '{':
         case '[':
@@ -23,10 +23,9 @@ int ehCharAbertura(char character) {
 /* retorna 1 quando corresponde a 
  * algum dos três caracteres de fechamento,
  * retorna 0 caso contrário */
-int ehCharFechamento(char character) {
+int ehCharFechamento(char caracter) {
 
-
-    switch(character){
+    switch(caracter) {
         case ')':
         case '}':
         case ']':
@@ -39,13 +38,13 @@ int ehCharFechamento(char character) {
 
 /* retorna 1 quando os pares estão corretos,
  * retorna 0 caso contrário */
-int ehParCorreto(char char1, char char2) {
+int ehParCorreto(char topo, char fecha) {
 
-    if( (char1 == '(') && (char2 == ')') )
+    if((topo == '(') && (fecha == ')'))
         return 1;
-    if( (char1 == '{') && (char2 == '}') )
+    if((topo == '{') && (fecha == '}'))
         return 1;
-    if( (char1 == '[') && (char2 == ']') )
+    if((topo == '[') && (fecha == ']'))
         return 1;
 
     return 0;
@@ -54,14 +53,14 @@ int ehParCorreto(char char1, char char2) {
 int main() {
 
     pilha_t *pilha;
-    char expressao[MAX_ELEM * 2], character;
+    char expressao[MAX_ELEM * 2], topo, caracter;
     int i = 0; 
     
-    if( !(pilha = inicializa_pilha(MAX_ELEM)) ) {
+    if(! (pilha = inicializa_pilha(MAX_ELEM))) {
         fprintf(stderr, "A alocacao nao obteve sucesso \n");
         
         /* para a shell, 1 representa erro */
-        return 1;
+        exit(1);
     }
 
     /* lê duas vezes o que a pilha pode empilhar, porque
@@ -74,53 +73,53 @@ int main() {
     expressao[strcspn(expressao, "\n")] = '\0';
 
     /* percorre a string */
-    while(expressao[i] != '\0') {
+    while((caracter = expressao[i]) != '\0') {
 
-        if(ehCharAbertura(expressao[i])) {
-            if(push(pilha, expressao[i]) == -1) {
+        if(ehCharAbertura(caracter)) {
+            if(push(pilha, caracter) == -1) {
                 /* a pilha está cheia */
                 destroi_pilha(pilha);
-                return 1;
+                return 0;
             }
         }
 
         /* se o caracter for de fechamento */
-        else if(ehCharFechamento(expressao[i])) {
+        else if(ehCharFechamento(caracter)) {
 
-            if( !pilha_vazia(pilha) ) {
-                character = pop(pilha);
+            if(! pilha_vazia(pilha)) {
+                topo = pop(pilha);
 
                 /* verifica o topo da pilha com o caracter de fechamento */
-                if( !ehParCorreto(character, expressao[i]) ) {
+                if(! ehParCorreto(topo, caracter)) {
                 /* caracter não correspondente */
                     destroi_pilha(pilha);
-                    return 1;
+                    return 0;
                 }
             }
             /* pilha vazia, o caracter de fechamento está sobrando */
             else {
                 destroi_pilha(pilha);
-                return 1;
+                return 0;
             }
         }
 
         /* caracter inválido */
         else {
             destroi_pilha(pilha);
-            return 1;
+            return 0;
         }
         
         i++;
     }
 
     /* sobrou caracteres, expressão inválida */
-    if( !pilha_vazia(pilha) ) {
+    if(! pilha_vazia(pilha)) {
         destroi_pilha(pilha);
-        return 1;
+        return 0;
     }
 
     destroi_pilha(pilha);
     
     /* expressão válida */
-    return 0;
+    return 1;
 }
