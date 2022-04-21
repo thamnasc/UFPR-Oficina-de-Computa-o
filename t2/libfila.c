@@ -2,6 +2,22 @@
 #include <stdlib.h>
 #include <stdio.h>
 
+/* cria nodo e retorna o seu ponteiro em caso de sucesso
+ * retorna NULL em caso de erro
+ */
+nodo_f_t *nodo_cria(int elemento) {
+
+    nodo_f_t *auxNodo;
+
+    if(! (auxNodo = malloc(sizeof(nodo_f_t))))
+        return NULL;
+
+    auxNodo->chave = elemento;
+    auxNodo->prox = NULL;
+
+    return auxNodo;
+}
+
 fila_t *fila_cria() {
 
     fila_t *auxFila;
@@ -63,17 +79,15 @@ int queue(fila_t *f, int elemento) {
 
     nodo_f_t *novoNodo;
 
-    /* caso não seja bem sucedida a alocação */
-    if(! (novoNodo = malloc(sizeof(nodo_f_t))))
+    /* caso não seja bem sucedida a alocação do nodo,
+     * retorna 0 */
+    if(! (novoNodo = nodo_cria(elemento)))
         return 0;
-    novoNodo->chave = elemento;
-    novoNodo->prox = NULL;
     
     if(fila_vazia(f)) {
         f->ini = novoNodo;
         f->fim = novoNodo;
         f->tamanho++;
-
         return 1;
     }
 
