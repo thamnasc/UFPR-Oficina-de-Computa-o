@@ -2,9 +2,26 @@
 #include <stdlib.h>
 #include <stdio.h>
 
+/* cria nodo e retorna o seu ponteiro em caso de sucesso
+ * retorna NULL em caso de erro
+ */
+nodo_l_t *nodo_cria(int elemento) {
+
+    nodo_l_t *auxNodo;
+
+    if(! (auxNodo = malloc(sizeof(nodo_l_t))))
+        return NULL;
+
+    auxNodo->elemento = elemento;
+    auxNodo->prox = NULL;
+
+    return auxNodo;
+}
+
 lista_t *lista_cria() {
 
     lista_t *auxLista;
+
     if(! (auxLista = malloc(sizeof(lista_t))))
         return NULL;
     
@@ -54,11 +71,10 @@ int lista_insere_inicio(lista_t *l, int elemento) {
 
     nodo_l_t *novoNodo;
 
-    /* cria nodo */
-    if(! (novoNodo = malloc(sizeof(nodo_l_t))))
+    /* caso não seja bem sucedida a alocação do nodo,
+     * retorna 0 */
+    if(! (novoNodo = nodo_cria(elemento)))
         return 0;
-    novoNodo->elemento = elemento;
-    novoNodo->prox = NULL;
 
     l->tamanho++;
 
@@ -78,11 +94,10 @@ int lista_insere_fim(lista_t *l, int elemento) {
 
     nodo_l_t *auxNodo, *novoNodo;
 
-    /* caso não tenha sido bem sucedida a alocação */
-    if(! (novoNodo = malloc(sizeof(nodo_l_t))))
+    /* caso não seja bem sucedida a alocação do nodo,
+     * retorna 0 */
+    if(! (novoNodo = nodo_cria(elemento)))
         return 0;
-    novoNodo->elemento = elemento;
-    novoNodo->prox = NULL;
 
     l->tamanho++;
 
@@ -121,11 +136,10 @@ int lista_insere_ordenado(lista_t *l, int elemento) {
         }
     }
 
-    /* caso não tenha sido bem sucedida a alocação */
-    if(! (novoNodo = malloc(sizeof(nodo_l_t))))
+    /* caso não seja bem sucedida a alocação do nodo,
+     * retorna 0 */
+    if(! (novoNodo = nodo_cria(elemento)))
         return 0;
-    novoNodo->elemento = elemento;
-    novoNodo->prox = NULL;
 
     if(lista_vazia(l)) {
         l->ini = novoNodo;
@@ -133,14 +147,13 @@ int lista_insere_ordenado(lista_t *l, int elemento) {
         return 1;
     }
 
+    l->tamanho++;
+
     nodoAtual = l->ini;
     nodoAnt = l->ini;
 
-    l->tamanho++;
-
     /* percorre a lista até encontrar o fim */
     while(nodoAtual != NULL) {
-
         if(nodoAtual->elemento > novoNodo->elemento) {
             /* inserir no início da lista */
             if(nodoAtual == l->ini) {
@@ -155,7 +168,6 @@ int lista_insere_ordenado(lista_t *l, int elemento) {
                 return 1;
             }
         }
-    
         nodoAnt = nodoAtual;
         nodoAtual = nodoAtual->prox;
     }
@@ -176,20 +188,19 @@ int lista_retira_inicio(lista_t *l, int *elemento) {
         return 0;
 
     *elemento = l->ini->elemento;
-    
-    /* se não estiver vazia */
-    auxNodo = l->ini;
 
     if(l->tamanho == 1) {
+        l->tamanho--;
         free(l->ini);
         l->ini = NULL;
-        l->tamanho--;
         return 1;
     }
 
     l->tamanho--;
     
     /* se tiver mais de um elemento */
+    auxNodo = l->ini;
+
     l->ini = l->ini->prox;
 
     free(auxNodo);
@@ -207,14 +218,13 @@ int lista_retira_fim(lista_t *l, int *elemento) {
 
     if(l->tamanho == 1) {
         *elemento = l->ini->elemento;
+        l->tamanho--;
         free(l->ini);
         l->ini = NULL;
-        l->tamanho--;
         return 1;
     }
 
     l->tamanho--;
-
     auxNodo = l->ini;
 
     /* procura pelo penúltimo */
