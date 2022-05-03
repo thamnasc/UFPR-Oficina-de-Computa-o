@@ -83,5 +83,5 @@ void pilha_imprime(pilha_t *pilha) {
     for(i = 0; i < pilha->topo; i++) {
         printf("%d ", pilha->elems[i]);
     }
-    printf("%d", pilha->elems[pilha->topo]);
+    printf("%d\n", pilha->elems[pilha->topo]);
 }

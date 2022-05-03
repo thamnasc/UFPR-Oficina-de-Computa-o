@@ -133,5 +133,5 @@ void fila_imprime(fila_t *f) {
         auxNodo = auxNodo->prox;
     }
 
-    printf("%d", auxNodo->chave);
+    printf("%d\n", auxNodo->chave);
 }
