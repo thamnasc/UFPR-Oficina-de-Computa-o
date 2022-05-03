@@ -141,3 +141,8 @@ int tem_dinheiro(pessoa_t *pessoa) {
         return 0;
 }
 
+void coloca_mascara(pessoa_t *pessoa) {
+
+    pessoa->comMascara = 1;
+}
+

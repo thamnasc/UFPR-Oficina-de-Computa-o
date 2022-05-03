@@ -84,13 +84,14 @@ int lista_insere_fim(lista_t *l, int elemento) {
     novoNodo->elemento = elemento;
     novoNodo->prox = NULL;
 
-    l->tamanho++;
-
     /* se a lista estiver vazia, insere no início */
     if(lista_vazia(l)) {
         l->ini = novoNodo;
+        l->tamanho++;
         return 1;
     }
+
+    l->tamanho++;
 
     /* quando há pelo menos um elemento na lista */
     auxNodo = l->ini;
@@ -312,5 +313,5 @@ void lista_imprime(lista_t *l) {
         printf("%d ", auxNodo->elemento);
         auxNodo = auxNodo->prox;
     }
-    printf("%d", auxNodo->elemento);
+    printf("%d\n", auxNodo->elemento);
 }

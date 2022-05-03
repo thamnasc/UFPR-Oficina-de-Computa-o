@@ -73,4 +73,9 @@ int tem_mascara(pessoa_t *pessoa);
  */
 int tem_dinheiro(pessoa_t *pessoa);
 
+/* 
+ * Atribui estado 1 para comMascara
+ */
+void coloca_mascara(pessoa_t *pessoa);
+
 #endif

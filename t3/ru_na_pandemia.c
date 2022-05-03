@@ -5,7 +5,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
-/* em Curitiba há 1.963.726 habitantes
+
+/* Em Curitiba há 1.963.726 habitantes
 * e até o dia 29/04 1.671.819 receberam a primeira dose,
 * então estou considerando a proporção 85 / 15 para vacinados
 */
@@ -13,20 +14,20 @@
 #define PERC_MASC 95
 #define PERC_DINHEIRO 60
 
-/* struct para armazenar informacoes do RU */
+/* Struct para armazenar informacoes do RU */
 typedef struct informacoes_t {
     float total;
     float refeicoes;
     float mascaras;
 } informacoes_t;
 
-/* retorna numero aleatorio no intervalo de n m */
+/* Retorna numero aleatorio no intervalo de [n, m] */
 int alet(int n, int m) {
 
     return (rand() % (m - n + 1)) + n;
 }
 
-/* sorteia cada atributo com chances nas proporcoes estipuladas */
+/* Sorteia cada atributo com chances nas proporcoes estipuladas */
 int sorteia_na_proporcao(int PERC) {
 
     if(alet(0, 100) < PERC)
@@ -35,7 +36,7 @@ int sorteia_na_proporcao(int PERC) {
         return 0;
 }
 
-/* retorna 1 se a criação das pessoas ocorreu com sucesso,
+/* Retorna 1 se a criação das pessoas ocorreu com sucesso,
  * retorna 0 caso contrário
  */
 int popula_fila_ru(grupo_t *grupo, fila_t *atend) {
@@ -45,21 +46,22 @@ int popula_fila_ru(grupo_t *grupo, fila_t *atend) {
 
     for(i = 1; i <= 1000; i++) {
 
-        /* sorteia se tomou vacina ou não */
+        /* Sorteia se tomou vacina ou não */
         vac = sorteia_na_proporcao(PERC_VAC);
 
-        /* sorteia se tem máscara ou não */
+        /* Sorteia se tem máscara ou não */
         masc = sorteia_na_proporcao(PERC_MASC);
 
-        /* sorteia o dinheiro */
+        /* Sorteia o dinheiro */
         if(sorteia_na_proporcao(PERC_DINHEIRO))
             din = 1.30;
         else
             din = 3.80;
         
-        /* insere pessoa na TAD */
+        /* Insere pessoa na TAD */
         grupo_insere(grupo, i, vac, masc, din);
-        /* armazena o ticket das pessoas numa fila de atendimento */
+
+        /* Armazena o ticket das pessoas numa fila de atendimento */
         queue(atend, i);
     }
 
@@ -80,47 +82,50 @@ void fiscaliza_fila(grupo_t *pessoas, fila_t *atend, lista_t *naoAtend,
 
         if(eh_vacinada(pessoa)) {
             if(tem_mascara(pessoa)) {
-                    /* paga um bandejão */
+                    /* Paga um bandejão */
                     pop(refeicoes);
-                    /*contabiliza compra */
+
+                    /* Contabiliza compra */
                     info->refeicoes += 130;
             }
 
             else {
                 if(! pilha_vazia(mascaras)) {
                     if(tem_dinheiro(pessoa)) {
-                        /* compra máscara */
+                        /* Compra máscara */
                         pop(mascaras);
-                        /* é reinserida ao final da fila */
+
+                        /* É reinserida ao final da fila */
                         queue(atend, ticket);
-                        /*contabiliza compra */
+
+                        coloca_mascara(pessoa);
+
+                        /* Contabiliza compra */
                         info->mascaras += 250;
                     }
                     
-                    /* sem dinheiro para comprar máscara */
-                    else {
+                    /* Sem dinheiro para comprar máscara */
+                    else 
                         lista_insere_ordenado(semMasc, ticket);
-                        lista_insere_ordenado(naoAtend, ticket);
-                    }
                 }
 
-                /* não há máscaras para comprar */
-                else {
+                /* Não há máscaras para comprar */
+                else 
                     lista_insere_ordenado(acabouMasc, ticket);
-                    lista_insere_ordenado(naoAtend, ticket);
-                }
             }
         }
 
-        /* não vacinada */
-        else {
+        /* Não vacinada */
+        else 
             lista_insere_ordenado(semVac, ticket);
+        
+        /* Insere na lista de tickets não utilizados */
+        if((! tem_mascara(pessoa)) || (! eh_vacinada(pessoa))) 
             lista_insere_ordenado(naoAtend, ticket);
-        }
     }
     
-    /* sem refeições restantes */
-    if(pilha_vazia(refeicoes) && (! fila_vazia(atend))) {
+    /* Sem refeições restantes */
+    if(pilha_vazia(refeicoes)) {
         
         while(! fila_vazia(atend)) {
             dequeue(atend, &ticket);
@@ -129,8 +134,10 @@ void fiscaliza_fila(grupo_t *pessoas, fila_t *atend, lista_t *naoAtend,
         }
     }
 
+    /* Tratativa de problema de casas decimais */
     info->refeicoes = info->refeicoes / 100;
     info->mascaras = info->mascaras / 100;
+
     info->total = info->refeicoes + info->mascaras;
 }
 
@@ -156,12 +163,16 @@ void imprime_contabilidade(informacoes_t *infos, lista_t *naoAtend, lista_t *sem
     printf("Ticket \tMotivo \n");
     while(! lista_vazia(naoAtend)) {
         lista_retira_inicio(naoAtend, &ticket);
+
         if(lista_pertence(semVac, ticket)) 
             printf("%d\tSem vacina \n", ticket);
+
         else if(lista_pertence(semMasc, ticket))
             printf("%d\tSem dinheiro para mascara \n", ticket);
+
         else if(lista_pertence(acabouMasc, ticket))
             printf("%d\tAcabaram as mascaras \n", ticket);
+
         else if(lista_pertence(acabouRef, ticket))
             printf("%d\tAcabaram as refeicoes \n", ticket);
     }
@@ -192,57 +203,63 @@ int main() {
     informacoes_t *info;
     lista_t *semVac, *semMasc, *acabouMasc, *acabouRef;
 
-    /* seed para gerar numeros aleatorios a partir do horario do computador */
+    /* Seed para gerar numeros aleatorios a partir do horario do computador */
     srand(time(0));
 
     printf("\nAbrindo o RU....\n");
-    printf("\n=====A venda=====\n");
+    printf("\n==========A venda==========\n");
 
     if(! (refeicoes = pilha_cria(alet(500, 1000)))) {
         printf("Erro durante a alocacao da pilha de bandejoes. \n");
         exit(1);
     }
     prepara_refeicoes(refeicoes);
-    printf("%d bandejoes \n", pilha_tamanho(refeicoes));
+    printf("\t%d bandejoes \n", pilha_tamanho(refeicoes));
     
     if(! (mascaras = pilha_cria(alet(1, 100)))) {
         printf("Erro durante a alocacao da pilha de mascaras. \n");
         exit(1);
     }
     compra_mascaras(mascaras);
-    printf("%d mascaras \n", pilha_tamanho(mascaras));
-    printf("=================\n\n");
+    printf("\t%d mascaras \n", pilha_tamanho(mascaras));
+    printf("===========================\n\n");
 
     if(! (atend = fila_cria())) {
         printf("Erro durante a alocacao da fila de atendimento. \n");
         exit(1);
     }
+
     if(! (pessoas = grupo_cria())) {
         printf("Erro durante a alocacao da fila do RU. \n");
         exit(1);
     }
+
     if(! (naoAtend = lista_cria())) {
         printf("Erro durante a alocacao de tickets nao atendidos. \n");
         exit(1);
     }
+
     if(! (semVac = lista_cria())) {
         printf("Erro durante a alocacao de lista para quem estava sem vacina. \n");
         exit(1);
     }
+
     if(! (semMasc = lista_cria())) {
         printf("Erro durante a alocacao de lista para quem estava sem mascara. \n");
         exit(1);
     }
+
     if(! (acabouMasc = lista_cria())) {
         printf("Erro durante a alocacao da lista para quando acabou as mascaras. \n");
         exit(1);
     }
+
     if(! (acabouRef = lista_cria())) {
         printf("Erro durante a alocacao da lista para quando acabou as refeicoes. \n");
         exit(1);
     }
 
-    /* criação da struct para armazenar informaçoes */
+    /* Criação da struct para armazenar informaçoes */
     if(! (info = malloc(sizeof(informacoes_t)))) {
         printf("Erro durante a alocacao da struct de informacoes. \n");
         exit(1);
@@ -261,7 +278,7 @@ int main() {
 
     imprime_contabilidade(info, naoAtend, semVac, semMasc, acabouMasc, acabouRef);
 
-    /* liberando memoria alocada dinamicante */
+    /* Liberando memoria alocada dinamicante */
     refeicoes = pilha_destroi(refeicoes);
     mascaras = pilha_destroi(mascaras);
     atend = fila_destroi(atend);
