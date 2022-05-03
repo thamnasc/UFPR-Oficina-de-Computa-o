@@ -95,13 +95,13 @@ void fiscaliza_fila(grupo_t *pessoas, fila_t *atend, lista_t *naoAtend,
                         /* Compra máscara */
                         pop(mascaras);
 
-                        /* É reinserida ao final da fila */
-                        queue(atend, ticket);
+                        /* Contabiliza compra */
+                        info->mascaras += 250;
 
                         coloca_mascara(pessoa);
 
-                        /* Contabiliza compra */
-                        info->mascaras += 250;
+                        /* É reinserida ao final da fila */
+                        queue(atend, ticket);
                     }
                     
                     /* Sem dinheiro para comprar máscara */
