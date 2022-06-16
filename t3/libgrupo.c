@@ -112,37 +112,38 @@ pessoa_t *cria_pessoa(int ticket, int vac, int masc, float din) {
     pessoa->comMascara = masc;
     pessoa->vacinada = vac;
     pessoa->dinheiro = din;
+    pessoa->status = 0;
     pessoa->prox = NULL;
 
     return pessoa;
 }
 
-int eh_vacinada(pessoa_t *pessoa) {
+int eh_vacinada(pessoa_t pessoa) {
 
-    if(pessoa->vacinada)
+    if(pessoa.vacinada)
         return 1;
     else 
         return 0;
 }
 
-int tem_mascara(pessoa_t *pessoa) {
+int tem_mascara(pessoa_t pessoa) {
 
-    if(pessoa->comMascara)
+    if(pessoa.comMascara)
         return 1;
     else
         return 0;
 }
 
-int tem_dinheiro(pessoa_t *pessoa) {
+int tem_dinheiro(pessoa_t pessoa) {
 
-    if(pessoa->dinheiro > 1.30)
+    if(pessoa.dinheiro > 1.30)
         return 1;
     else
         return 0;
 }
 
-void coloca_mascara(pessoa_t *pessoa) {
+void coloca_mascara(pessoa_t pessoa) {
 
-    pessoa->comMascara = 1;
+    pessoa.comMascara = 1;
 }
 

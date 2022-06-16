@@ -6,6 +6,7 @@ typedef struct pessoa_t {
     int vacinada;
     int comMascara;
     float dinheiro;
+    int status; /* status na fila do ru */
     struct pessoa_t *prox;
 } pessoa_t;
 
@@ -53,29 +54,29 @@ pessoa_t *procura_pessoa(grupo_t *f, int ticket);
  * Cria pessoa e retorna o ponteiro em caso de sucesso
  * retorna NULL caso contrario
  */
-pessoa_t *cria_pessoa(int ticket, int vac, int masc, float din);
+pessoa_t cria_pessoa(int ticket, int vac, int masc, float din);
 
 /* 
  * Retorna 1 se tomou vacina
  * retorna 0 caso contrário 
  */
-int eh_vacinada(pessoa_t *pessoa);
+int eh_vacinada(pessoa_t pessoa);
 
 /* 
  * Retorna 1 se tem máscara
  * retorna 0 caso contrário
  */
-int tem_mascara(pessoa_t *pessoa);
+int tem_mascara(pessoa_t pessoa);
 
 /* 
  * Retorna 1 se tem 3.80
  * retorna 0 caso contrário
  */
-int tem_dinheiro(pessoa_t *pessoa);
+int tem_dinheiro(pessoa_t pessoa);
 
 /* 
  * Atribui estado 1 para comMascara
  */
-void coloca_mascara(pessoa_t *pessoa);
+void coloca_mascara(pessoa_t pessoa);
 
 #endif
