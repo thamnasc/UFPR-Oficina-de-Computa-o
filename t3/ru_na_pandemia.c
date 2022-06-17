@@ -2,294 +2,109 @@
 #include "libfila.h"
 #include "liblista.h"
 #include "libgrupo.h"
+#include "libru.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
+#define PESSOAS 1000
 
-/* Em Curitiba há 1.963.726 habitantes
-* e até o dia 29/04 1.671.819 receberam a primeira dose,
-* então estou considerando a proporção 85 / 15 para vacinados
-*/
-#define PERC_VAC 85
-#define PERC_MASC 95
-#define PERC_DINHEIRO 60
-
-/* Struct para armazenar informacoes do RU */
-typedef struct informacoes_t {
-    float total;
-    float refeicoes;
-    float mascaras;
-} informacoes_t;
-
-/* Retorna numero aleatorio no intervalo de [n, m] */
-int alet(int n, int m) {
-
-    return (rand() % (m - n + 1)) + n;
-}
-
-/* Sorteia cada atributo com chances nas proporcoes estipuladas */
-int sorteia_na_proporcao(int PERC) {
-
-    if(alet(0, 100) < PERC)
-        return 1;
-    else
-        return 0;
-}
-
-/* Retorna 1 se a criação das pessoas ocorreu com sucesso,
- * retorna 0 caso contrário
- */
-int popula_fila_ru(grupo_t *grupo, fila_t *atend) {
-
-    int vac = 0, masc = 0, i = 0;
-    float din = 0;
-
-    for(i = 1; i <= 1000; i++) {
-
-        /* Sorteia se tomou vacina ou não */
-        vac = sorteia_na_proporcao(PERC_VAC);
-
-        /* Sorteia se tem máscara ou não */
-        masc = sorteia_na_proporcao(PERC_MASC);
-
-        /* Sorteia o dinheiro */
-        if(sorteia_na_proporcao(PERC_DINHEIRO))
-            din = 1.30;
-        else
-            din = 3.80;
-        
-        /* Insere pessoa na TAD */
-        grupo_insere(grupo, i, vac, masc, din);
-
-        /* Armazena o ticket das pessoas numa fila de atendimento */
-        queue(atend, i);
-    }
-
-    return 1;
-}
-
-void fiscaliza_fila(grupo_t *pessoas, fila_t *atend, lista_t *naoAtend, 
-                    informacoes_t *info, pilha_t *refeicoes, pilha_t *mascaras, 
-                    lista_t *semVac, lista_t *semMasc, lista_t *acabouMasc, lista_t *acabouRef) {
+void fiscalizaFila(armazenaVariaveis_t *var, pessoa_t *grupo) {
 
     int ticket;
-    pessoa_t *pessoa;
+    pessoa_t pessoa;
 
-    while((! pilha_vazia(refeicoes)) && (! fila_vazia(atend))) {
+    while((! pilha_vazia(var->refeicoes)) && (! fila_vazia(var->atend))) {
 
-        dequeue(atend, &ticket);
-        pessoa = procura_pessoa(pessoas, ticket);
+        dequeue(var->atend, &ticket);
+        pessoa = grupo[ticket];
 
         if(eh_vacinada(pessoa)) {
             if(tem_mascara(pessoa)) {
-                    /* Paga um bandejão */
-                    pop(refeicoes);
 
-                    /* Contabiliza compra */
-                    info->refeicoes += 130;
+                    pop(var->refeicoes); /* Paga um bandejão */
+                    var->ru->refeicoes += 130; /* Contabiliza compra */
             }
 
             else {
-                if(! pilha_vazia(mascaras)) {
+                if(! pilha_vazia(var->mascaras)) {
                     if(tem_dinheiro(pessoa)) {
-                        /* Compra máscara */
-                        pop(mascaras);
 
-                        /* Contabiliza compra */
-                        info->mascaras += 250;
-
-                        coloca_mascara(pessoa);
-
-                        /* É reinserida ao final da fila */
-                        queue(atend, ticket);
+                        pop(var->mascaras); /* Compra máscara */
+                        var->ru->mascaras += 250; /* Contabiliza compra */
+                        coloca_mascara(&pessoa);       
+                        queue(var->atend, ticket); /* É reinserida ao final da fila */
                     }
                     
-                    /* Sem dinheiro para comprar máscara */
-                    else 
-                        lista_insere_ordenado(semMasc, ticket);
+                    else /* Sem dinheiro para comprar máscara */
+                        pessoa.status = 1; 
                 }
 
-                /* Não há máscaras para comprar */
-                else 
-                    lista_insere_ordenado(acabouMasc, ticket);
+                else /* Não há máscaras para comprar */
+                    pessoa.status = 2;
             }
         }
 
-        /* Não vacinada */
-        else 
-            lista_insere_ordenado(semVac, ticket);
+        else /* Não vacinada */
+            pessoa.status = 3;
         
         /* Insere na lista de tickets não utilizados */
         if((! tem_mascara(pessoa)) || (! eh_vacinada(pessoa))) 
-            lista_insere_ordenado(naoAtend, ticket);
+            lista_insere_ordenado(var->naoAtend, ticket);
+
+        grupo[ticket] = pessoa; /* Salva alteração de status */
     }
     
     /* Sem refeições restantes */
-    if(pilha_vazia(refeicoes)) {
+    if(pilha_vazia(var->refeicoes)) {
         
-        while(! fila_vazia(atend)) {
-            dequeue(atend, &ticket);
-            lista_insere_ordenado(naoAtend, ticket);
-            lista_insere_ordenado(acabouRef, ticket);
+        while(! fila_vazia(var->atend)) {
+
+            dequeue(var->atend, &ticket);
+            lista_insere_ordenado(var->naoAtend, ticket);
+            pessoa.status = 4; 
+            grupo[ticket] = pessoa; /* Salva alteração de status */
         }
     }
 
     /* Tratativa de problema de casas decimais */
-    info->refeicoes = info->refeicoes / 100;
-    info->mascaras = info->mascaras / 100;
+    var->ru->refeicoes = var->ru->refeicoes / 100;
+    var->ru->mascaras = var->ru->mascaras / 100;
 
-    info->total = info->refeicoes + info->mascaras;
-}
-
-void imprime_contabilidade(informacoes_t *infos, lista_t *naoAtend, lista_t *semVac, 
-                           lista_t *semMasc, lista_t *acabouMasc, lista_t *acabouRef) {
-    
-    int ticket;
-
-    printf("Encerrando o expediente....\n\n");
-    printf("==============Contabilidade RU==============\n");
-    printf(" Arrecadação com Refeições:     R$%.2f      \n", infos->refeicoes);
-    printf(" Arrecadação com Máscaras:      R$%.2f      \n", infos->mascaras);
-    printf(" Arrecadação Total:             R$%.2f      \n", infos->total);
-    printf("============================================\n\n");
-
-    printf("%d tickets nao foram utilizados: \n", naoAtend->tamanho);
-    printf("%d pessoas estavam sem vacina \n", lista_tamanho(semVac));
-    printf("%d pessoas estavam sem dinheiro para comprar mascara \n", lista_tamanho(semMasc));
-    printf("%d pessoas estavam sem mascara e nao havia para comprar \n", lista_tamanho(acabouMasc));
-    printf("%d pessoas ficaram sem refeicao porque acabaram os bandejoes \n\n", lista_tamanho(acabouRef));
-
-    printf("Tickets não atendidos: \n\n");
-    printf("Ticket \tMotivo \n");
-    while(! lista_vazia(naoAtend)) {
-        lista_retira_inicio(naoAtend, &ticket);
-
-        if(lista_pertence(semVac, ticket)) 
-            printf("%d\tSem vacina \n", ticket);
-
-        else if(lista_pertence(semMasc, ticket))
-            printf("%d\tSem dinheiro para mascara \n", ticket);
-
-        else if(lista_pertence(acabouMasc, ticket))
-            printf("%d\tAcabaram as mascaras \n", ticket);
-
-        else if(lista_pertence(acabouRef, ticket))
-            printf("%d\tAcabaram as refeicoes \n", ticket);
-    }
-}
-
-void prepara_refeicoes(pilha_t *refeicoes) {
-
-    int i = 1;
-
-    while(push(refeicoes, i) != -1) 
-        i++;
-}
-
-void compra_mascaras(pilha_t *mascaras) {
-
-    int i = 1;
-
-    while(push(mascaras, i) != -1) 
-        i++;
+    /* Contabiliza total de ganho do RU */
+    var->ru->total = var->ru->refeicoes + var->ru->mascaras;
 }
 
 int main() {
 
-    pilha_t *refeicoes, *mascaras;
-    fila_t *atend;
-    grupo_t *pessoas;
-    lista_t *naoAtend;
-    informacoes_t *info;
-    lista_t *semVac, *semMasc, *acabouMasc, *acabouRef;
+    pessoa_t grupo[PESSOAS];
+    armazenaVariaveis_t *var;  
 
     /* Seed para gerar numeros aleatorios a partir do horario do computador */
     srand(time(0));
 
+    /* Aloca memória e inicializa variáveis */
+    if(! (var = inicializaVariaveis())) {
+        printf("Erro durante a alocacao de memoria. \n");
+        exit(1);
+    }
+
+    /* Cria pessoas aleatórias e salva tickets na fila de atendimento do ru */
+    populaFilaRu(grupo, var->atend);
+
     printf("\nAbrindo o RU....\n");
     printf("\n==========A venda==========\n");
-
-    if(! (refeicoes = pilha_cria(alet(500, 1000)))) {
-        printf("Erro durante a alocacao da pilha de bandejoes. \n");
-        exit(1);
-    }
-    prepara_refeicoes(refeicoes);
-    printf("\t%d bandejoes \n", pilha_tamanho(refeicoes));
-    
-    if(! (mascaras = pilha_cria(alet(1, 100)))) {
-        printf("Erro durante a alocacao da pilha de mascaras. \n");
-        exit(1);
-    }
-    compra_mascaras(mascaras);
-    printf("\t%d mascaras \n", pilha_tamanho(mascaras));
+    printf("\t%d bandejoes \n", pilha_tamanho(var->refeicoes));
+    printf("\t%d mascaras \n", pilha_tamanho(var->mascaras));
     printf("===========================\n\n");
 
-    if(! (atend = fila_cria())) {
-        printf("Erro durante a alocacao da fila de atendimento. \n");
-        exit(1);
-    }
+    /* Verifica se a pessoa pode comprar a refeição, atualiza status de compra e
+     * popula lista de tickets não atendidos */
+    fiscalizaFila(var, grupo);
 
-    if(! (pessoas = grupo_cria())) {
-        printf("Erro durante a alocacao da fila do RU. \n");
-        exit(1);
-    }
+    imprimeContabilidade(var, grupo);
 
-    if(! (naoAtend = lista_cria())) {
-        printf("Erro durante a alocacao de tickets nao atendidos. \n");
-        exit(1);
-    }
-
-    if(! (semVac = lista_cria())) {
-        printf("Erro durante a alocacao de lista para quem estava sem vacina. \n");
-        exit(1);
-    }
-
-    if(! (semMasc = lista_cria())) {
-        printf("Erro durante a alocacao de lista para quem estava sem mascara. \n");
-        exit(1);
-    }
-
-    if(! (acabouMasc = lista_cria())) {
-        printf("Erro durante a alocacao da lista para quando acabou as mascaras. \n");
-        exit(1);
-    }
-
-    if(! (acabouRef = lista_cria())) {
-        printf("Erro durante a alocacao da lista para quando acabou as refeicoes. \n");
-        exit(1);
-    }
-
-    /* Criação da struct para armazenar informaçoes */
-    if(! (info = malloc(sizeof(informacoes_t)))) {
-        printf("Erro durante a alocacao da struct de informacoes. \n");
-        exit(1);
-    }
-    info->total = 0;
-    info->refeicoes = 0;
-    info->mascaras = 0;
-
-    if(! (popula_fila_ru(pessoas, atend))) {
-        printf("Erro durante a criaçao das structs de pessoas. \n");
-        exit(1);
-    }
-    
-    fiscaliza_fila(pessoas, atend, naoAtend, info, refeicoes, 
-                   mascaras, semVac, semMasc, acabouMasc, acabouRef);
-
-    imprime_contabilidade(info, naoAtend, semVac, semMasc, acabouMasc, acabouRef);
-
-    /* Liberando memoria alocada dinamicante */
-    refeicoes = pilha_destroi(refeicoes);
-    mascaras = pilha_destroi(mascaras);
-    atend = fila_destroi(atend);
-    pessoas = grupo_destroi(pessoas);
-    naoAtend = lista_destroi(naoAtend);
-    semVac = lista_destroi(semVac);
-    semMasc = lista_destroi(semMasc);
-    acabouMasc = lista_destroi(acabouMasc);
-    acabouRef = lista_destroi(acabouRef);
-    free(info);
-    info = NULL;
+    /* Libera memória das variáveis alocadas dinamicamente */
+    liberaMemoria(var);
 
     return 0;
 }
